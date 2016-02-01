@@ -62,7 +62,8 @@ LL = lengths(idx);
 XX = LL'*[1:1000]/1000;
 %   we could put these absolute positions into bins
 %   which are a bit bigger than the pixels
-xx = round(XX/5);
+nbin=5;
+xx = ceil(XX/nbin);
 
 %   along this absolute axis, we could compute a mean and variance of the
 %   Hb expression level, at least as a start ...
@@ -84,7 +85,8 @@ for n=1:max(max(xx));
 end
 
 %   can also do this along the scaled axes
-yy = ones(Nem,1)*round([1:1000]/5);
+yy = ones(Nem,1)*ceil([1:1000]/nbin);
+
 for n=1:max(max(yy));
     [ii,jj] = find(yy==n);
     samples = [];
