@@ -157,3 +157,16 @@ set(gca,'FontSize',16,'Box','Off','TickDir','Out');
 axis([-0.1 1.1 0 0.06])
 axis square
 
+
+
+colors=colormap(jet(Nem));
+figure(3)
+for i=1:Nem
+ plot(xx(i,:),g1(i,:),'Color',colors(i,:))
+ hold on
+end
+figure(4)
+for i=1:Nem
+ plot(yy(i,:),g1(i,:),'Color',colors(i,:))
+ hold on
+end
