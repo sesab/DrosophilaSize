@@ -1,5 +1,6 @@
 load('wt_130104_Kni_Kr_Gt_Hb_AP.mat')
 
+FigFolder='figs';
 
 % data = 
 % 
@@ -27,6 +28,7 @@ rawg2 = vertcat(data.Kr);
 rawg3 = vertcat(data.Gt);
 rawg4 = vertcat(data.Kni);
 lengths = [data.AP];
+
 %
 %   all of these embryos are in nuclear cycle 14, but things evolve with
 %   time; we need to pick out those embryos in a relatively small window.
@@ -41,14 +43,15 @@ Nem = sum(idx);
 %   we should normalize the expression levels of the genes
 %   I'll look just at one, and you can play with the rest
 
-g1 = rawg1(idx,:);
-offset1 = min(mean(g1));
-range1 = max(mean(g1))-min(mean(g1));
+g1 = rawg3(idx,:);
+genename='Gt';
+offset1 = min(nanmean(g1));
+range1 = max(nanmean(g1))-min(nanmean(g1));
 g1 = (g1-offset1)/range1;
 
 %   we also need the lengths of the embryos
 LL = lengths(idx);
-%   std(LL)/mean(LL) = 0.0293
+%   nanstd(LL)/nanmean(LL) = 0.0293
 %   so we have +/- 3% fluctuations in length
 
 %   the index for the array g1 is length in FRACTIONAL units of the egg
@@ -65,18 +68,19 @@ XX = LL'*[1:1000]/1000;
 nbin=5;
 xx = ceil(XX/nbin);
 
-%   along this absolute axis, we could compute a mean and variance of the
+%   along this absolute axis, we could compute a nanmean and variance of the
 %   Hb expression level, at least as a start ...
 
 for n=1:max(max(xx));
 
     [ii,jj] = find(xx==n);
+    
     samples = [];
     for k=1:length(ii);
         samples = [samples g1(ii(k),jj(k))];
     end
-    meang1_abs(n) = mean(samples);
-    varg1_abs(n) = var(samples);
+    nanmeang1_abs(n) = nanmean(samples);
+    nanvarg1_abs(n) = nanvar(samples);
 end
 %Check how many data for each n
 
@@ -93,8 +97,9 @@ for n=1:max(max(yy));
     for k=1:length(ii);
         samples = [samples g1(ii(k),jj(k))];
     end
-    meang1_rel(n) = mean(samples);
-    varg1_rel(n) = var(samples);
+    nanmeang1_rel(n) = nanmean(samples);
+    nanvarg1_rel(n) = nanvar(samples);
+    nanstdg1_rel(n)= nanstd(samples)
 end
 
 for n=1:max(max(yy));
@@ -103,11 +108,20 @@ end
 
 
 figure(1)
-plot(meang1_abs,varg1_abs,'-',meang1_rel,varg1_rel,'-')
+
+plot(nanmeang1_abs,nanvarg1_abs,'-',nanmeang1_rel,nanvarg1_rel,'-')
+
+figure(3)
+v=nbin*[1:n];
+plot(v,nanmeang1_rel,'b-',[v v],[nanmeang1_rel-nanstdg1_rel nanmeang1_rel+nanstdg1_rel],'b-')
+
+%figure(4)
+%v=mean(XX(:,[1:5:1000]));
+%plot(v,nanmeang1_rel,'b-',[v v],[nanmeang1_rel-nanstdg1_rel nanmeang1_rel+nanstdg1_rel],'b-')
 
 %   this is very encouraging, let's look with error bars
 
-for kk=1:20;
+for kk=1:50;
     list = randperm(Nem);
     list = list(1:round(Nem/2));
     test = g1(list,:);
@@ -119,8 +133,8 @@ for kk=1:20;
         for k=1:length(ii);
             samples = [samples test(ii(k),jj(k))];
         end
-        Mg1_abs(kk,n) = mean(samples);
-        Vg1_abs(kk,n) = var(samples);
+        Mg1_abs(kk,n) = nanmean(samples);
+        Vg1_abs(kk,n) = nanvar(samples);
     end
     for n=1:max(max(yy));
         [ii,jj] = find(ytest==n);
@@ -128,32 +142,40 @@ for kk=1:20;
         for k=1:length(ii);
             samples = [samples test(ii(k),jj(k))];
         end
-        Mg1_rel(kk,n) = mean(samples);
-        Vg1_rel(kk,n) = var(samples);
+        Mg1_rel(kk,n) = nanmean(samples);
+        Vg1_rel(kk,n) = nanvar(samples);
     end
 end
 
 figure(2)
 for n=1:length(Mg1_abs);
-    am = mean(Mg1_abs(:,n));
-    bm = std(Mg1_abs(:,n));
-    av = mean(Vg1_abs(:,n));
-    bv = std(Vg1_abs(:,n));
+    am = nanmean(Mg1_abs(:,n));
+    bm = nanstd(Mg1_abs(:,n));
+    av = nanmean(Vg1_abs(:,n));
+    bv = nanstd(Vg1_abs(:,n));
     plot([am-bm am+bm],[av av],'b-',[am am],[av-bv av+bv],'b-')
     hold on
 end
 for n=1:length(Mg1_rel);
-    cm = mean(Mg1_rel(:,n));
-    dm = std(Mg1_rel(:,n));
-    cv = mean(Vg1_rel(:,n));
-    dv = std(Vg1_rel(:,n));
+    cm = nanmean(Mg1_rel(:,n));
+    dm = nanstd(Mg1_rel(:,n));
+    cv = nanmean(Vg1_rel(:,n));
+    dv = nanstd(Vg1_rel(:,n));
     plot([cm-dm cm+dm],[cv cv],'r-',[cm cm],[cv-dv cv+dv],'r-')
     hold on
 end
 hold off
-xlabel('mean Hb expression level')
-ylabel('variance of Hb expression level')
+label=sprintf('mean of %s expression level',genename);
+xlabel(label)
+label=sprintf('variance of %s expression level',genename);
+ylabel(label)
 set(gca,'FontSize',16,'Box','Off','TickDir','Out');
-axis([-0.1 1.1 0 0.06])
+limit=nanmax(cd+dv);
+axis([-0.1 1.1 0 .1])
 axis square
+
+filename=fullfile('figs',sprintf('Fig%s.pdf',genename));
+print('-dpdf','-r200',filename); 
+
+
 
