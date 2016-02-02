@@ -43,8 +43,8 @@ Nem = sum(idx);
 %   we should normalize the expression levels of the genes
 %   I'll look just at one, and you can play with the rest
 
-g1 = rawg3(idx,:);
-genename='Gt';
+g1 = rawg1(idx,:);
+genename='Hb';
 offset1 = min(nanmean(g1));
 range1 = max(nanmean(g1))-min(nanmean(g1));
 g1 = (g1-offset1)/range1;
@@ -111,17 +111,19 @@ figure(1)
 
 plot(nanmeang1_abs,nanvarg1_abs,'-',nanmeang1_rel,nanvarg1_rel,'-')
 
-figure(3)
-v=nbin*[1:n];
-plot(v,nanmeang1_rel,'b-',[v v],[nanmeang1_rel-nanstdg1_rel nanmeang1_rel+nanstdg1_rel],'b-')
-
+%figure(3)
+%v=nbin*[1:n];
+%plot(v,nanvarg1_rel./nanmeang1_rel(1:n))
+%hold on
+%plot(v,nanvarg1_abs(1:n)./nanmeang1_abs(1:n),'r')
+%hold off
 %figure(4)
 %v=mean(XX(:,[1:5:1000]));
 %plot(v,nanmeang1_rel,'b-',[v v],[nanmeang1_rel-nanstdg1_rel nanmeang1_rel+nanstdg1_rel],'b-')
 
 %   this is very encouraging, let's look with error bars
 
-for kk=1:50;
+for kk=1:20;
     list = randperm(Nem);
     list = list(1:round(Nem/2));
     test = g1(list,:);
@@ -176,6 +178,8 @@ axis square
 
 filename=fullfile('figs',sprintf('Fig%s.pdf',genename));
 print('-dpdf','-r200',filename); 
+
+
 
 
 
