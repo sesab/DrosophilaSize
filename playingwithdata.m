@@ -165,8 +165,8 @@ for i=1:Nem
  plot(xx(i,:),g1(i,:),'Color',colors(i,:))
  hold on
 end
-figure(4)
-for i=1:Nem
- plot(yy(i,:),g1(i,:),'Color',colors(i,:))
- hold on
-end
+%figure(4)
+%for i=1:Nem
+ %plot(ones(Nem,1)*[1:1000],g1(i,:),'Color',colors(i,:))
+ %hold on
+%end
