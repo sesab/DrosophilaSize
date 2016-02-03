@@ -44,10 +44,11 @@ Nem = sum(idx);
 %   I'll look just at one, and you can play with the rest
 
 g=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
-g.Hb = rawg1(idx,101:900);
-g.Kr = rawg2(idx,101:900);
-g.Gt = rawg3(idx,101:900);
-g.Kni= rawg4(idx,101:900);
+
+g.Hb = rawg1(idx,:);
+g.Kr = rawg2(idx,:);
+g.Gt = rawg3(idx,:);
+g.Kni= rawg4(idx,:);
 
 
 gNames = fieldnames(g);
@@ -71,30 +72,36 @@ LL = lengths(idx);
 % %   But we could also make an x-axis in pixels (shoudl check units!)
 % %   for each embryo
 % 
+
 XX = LL'*[1:1000]/1000;
 % %   we could put these absolute positions into bins
 % %   which are a bit bigger than the pixels
 nbin=5;
 xx = ceil(XX/nbin);
-yy= ceil([1:1000]/nbin);
+
 % 
-% %   along this absolute axis, we could compute a mean and variance of the
-% %   Hb expression level, at least as a start ...
+% %   along this absolute axis, we could compute a mean and covariance of the
+% %   genes expression level given the space
 % 
-y=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
- for n=1:max(max(xx));
-    [ii,jj] = find(xx==n);
+
+temporar=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+data=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
+ for n=min(min(xx)):max(max(xx));
+    [ii,jj] = find(xx==n);  
     for loopIndex = 1:numel(gNames) 
-        tmp=g.(gNames{loopIndex});
-        samples=[];
+        tmp=g.(gNames{loopIndex});  
+         samples=[];
         for k=1:length(ii);
             samples = [samples tmp(ii(k),jj(k))];
         end
-        y.(gNames{loopIndex=samples;
+        y.(gNames{loopIndex})=samples;
     end
-   % nanmeang1_abs(n) = nanmean(samples);
-    %nanvarg1_abs(n) = nanvar(samples);
-end
+    C=padcat(y.(gNames{1}),y.(gNames{2}),y.(gNames{3}),y.(gNames{4}));
+    data(n).Cov=nancov(C');
+    data(n).mu=nanmean(C'); 
+ end
+
+ 
 % %Check how many data for each n
 % 
 % for n=1:max(max(xx));
@@ -102,7 +109,8 @@ end
 % end
 % 
 % %   can also do this along the scaled axes
-% yy = ones(Nem,1)*ceil([1:1000]/nbin);
+
+yy= ones(Nem,1)*ceil([1:1000]/nbin);
 % 
 % for n=1:max(max(yy));
 %     [ii,jj] = find(yy==n);

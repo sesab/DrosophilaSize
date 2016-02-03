@@ -99,7 +99,7 @@ for n=1:max(max(yy));
     end
     nanmeang1_rel(n) = nanmean(samples);
     nanvarg1_rel(n) = nanvar(samples);
-    nanstdg1_rel(n)= nanstd(samples)
+    nanstdg1_rel(n)= nanstd(samples);
 end
 
 for n=1:max(max(yy));

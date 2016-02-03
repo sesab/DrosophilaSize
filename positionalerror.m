@@ -1,3 +1,5 @@
+%% Compute the covariance, average depending on x
+
 load('wt_130104_Kni_Kr_Gt_Hb_AP.mat')
 
 FigFolder='figs';
@@ -44,10 +46,11 @@ Nem = sum(idx);
 %   I'll look just at one, and you can play with the rest
 
 g=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
-g.Hb = rawg1(idx,101:900);
-g.Kr = rawg2(idx,101:900);
-g.Gt = rawg3(idx,101:900);
-g.Kni= rawg4(idx,101:900);
+
+g.Hb = rawg1(idx,:);
+g.Kr = rawg2(idx,:);
+g.Gt = rawg3(idx,:);
+g.Kni= rawg4(idx,:);
 
 
 gNames = fieldnames(g);
@@ -72,30 +75,35 @@ LL = lengths(idx);
 % %   for each embryo
 % 
 
-XX = LL'*[1:800]/1000;
+XX = LL'*[1:1000]/1000;
 % %   we could put these absolute positions into bins
 % %   which are a bit bigger than the pixels
-nbin=1;
+nbin=5;
 xx = ceil(XX/nbin);
-yy= ceil([1:800]/nbin);
+
 % 
-% %   along this absolute axis, we could compute a mean and variance of the
-% %   Hb expression level, at least as a start ...
+% %   along this absolute axis, we could compute a mean and covariance of the
+% %   genes expression level given the space
 % 
-y=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+
+temporary=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+absolute=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
  for n=min(min(xx)):max(max(xx));
-    [ii,jj] = find(xx==n);
-    samples=[];
+    [ii,jj] = find(xx==n);  
     for loopIndex = 1:numel(gNames) 
         tmp=g.(gNames{loopIndex});  
+         samples=[];
         for k=1:length(ii);
             samples = [samples tmp(ii(k),jj(k))];
         end
-        y.(gNames{loopIndex})=samples;
+        temporary.(gNames{loopIndex})=samples;
     end
-   % nanmeang1_abs(n) = nanmean(samples);
-    %nanvarg1_abs(n) = nanvar(samples);
-end
+    C=[ temporary.(gNames{1});temporary.(gNames{2});temporary.(gNames{3});temporary.(gNames{4})];
+    absolute(n).Cov=nancov(C');
+    absolute(n).mu=nanmean(C'); 
+ end
+
+ 
 % %Check how many data for each n
 % 
 % for n=1:max(max(xx));
@@ -103,19 +111,26 @@ end
 % end
 % 
 % %   can also do this along the scaled axes
-% yy = ones(Nem,1)*ceil([1:1000]/nbin);
-% 
-% for n=1:max(max(yy));
-%     [ii,jj] = find(yy==n);
-%     samples = [];
-%     for k=1:length(ii);
-%         samples = [samples g1(ii(k),jj(k))];
-%     end
-%     nanmeang1_rel(n) = nanmean(samples);
-%     nanvarg1_rel(n) = nanvar(samples);
-%     nanstdg1_rel(n)= nanstd(samples)
-% end
-% 
+
+yy= ones(Nem,1)*ceil([1:1000]/nbin);
+
+temporary=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
+ for n=min(min(xx)):max(max(xx));
+    [ii,jj] = find(yy==n);  
+    for loopIndex = 1:numel(gNames) 
+        tmp=g.(gNames{loopIndex});  
+         samples=[];
+        for k=1:length(ii);
+            samples = [samples tmp(ii(k),jj(k))];
+        end
+        temporary.(gNames{loopIndex})=samples;
+    end
+    C=[temporary.(gNames{1});temporary.(gNames{2});temporary.(gNames{3});temporary.(gNames{4})];
+    relative(n).Cov=nancov(C');
+    relative(n).mu=nanmean(C'); 
+ end
+
 % for n=1:max(max(yy));
 %     valy(n)=length(find(yy==n));
 % end
