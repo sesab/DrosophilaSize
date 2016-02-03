@@ -1,3 +1,8 @@
+% Decoding the position and computing the level of precision with which 
+% expression levels encode it.
+% PNAS Positional information, in bits. Eq 11
+% Get the value for the relative position
+
 load('wt_130104_Kni_Kr_Gt_Hb_AP.mat')
 
 FigFolder='figs';
@@ -84,8 +89,8 @@ xx = ceil(XX/nbin);
 % %   genes expression level given the space
 % 
 
-temporar=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
-data=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
+temporary=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+absolute=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
  for n=min(min(xx)):max(max(xx));
     [ii,jj] = find(xx==n);  
     for loopIndex = 1:numel(gNames) 
@@ -94,11 +99,11 @@ data=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
         for k=1:length(ii);
             samples = [samples tmp(ii(k),jj(k))];
         end
-        y.(gNames{loopIndex})=samples;
+        temporary.(gNames{loopIndex})=samples;
     end
-    C=padcat(y.(gNames{1}),y.(gNames{2}),y.(gNames{3}),y.(gNames{4}));
-    data(n).Cov=nancov(C');
-    data(n).mu=nanmean(C'); 
+    C=[ temporary.(gNames{1});temporary.(gNames{2});temporary.(gNames{3});temporary.(gNames{4})];
+    absolute(n).Cov=nancov(C');
+    absolute(n).mu=nanmean(C'); 
  end
 
  
@@ -111,18 +116,71 @@ data=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
 % %   can also do this along the scaled axes
 
 yy= ones(Nem,1)*ceil([1:1000]/nbin);
-% 
-% for n=1:max(max(yy));
-%     [ii,jj] = find(yy==n);
-%     samples = [];
-%     for k=1:length(ii);
-%         samples = [samples g1(ii(k),jj(k))];
-%     end
-%     nanmeang1_rel(n) = nanmean(samples);
-%     nanvarg1_rel(n) = nanvar(samples);
-%     nanstdg1_rel(n)= nanstd(samples)
-% end
-% 
+
+temporary=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
+relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
+ for n=min(min(yy)):max(max(yy));
+    [ii,jj] = find(yy==n);  
+    for loopIndex = 1:numel(gNames) 
+        tmp=g.(gNames{loopIndex});  
+         samples=[];
+        for k=1:length(ii);
+            samples = [samples tmp(ii(k),jj(k))];
+        end
+        temporary.(gNames{loopIndex})=samples;
+    end
+    C=[temporary.(gNames{1});temporary.(gNames{2});temporary.(gNames{3});temporary.(gNames{4})];
+    relative(n).Cov=nancov(C');
+    relative(n).mu=nanmean(C'); 
+ end
+ 
+ 
+  
+% Compute the precision of the absolute coding position
+ media=[];
+ for i=1:numel(absolute)
+    media(i,:)=absolute(i).mu(:);
+ end
+ 
+ gradmu=[];
+ for i=1:numel(gNames)
+     gradmu(:,i)=diff(media(:,i));
+ end
+ 
+ for i=2:numel(absolute)
+    invsigma_abs(i)=gradmu(i-1,:)*inv(absolute(i).Cov)*gradmu(i-1,:)'; 
+ end
+
+ 
+ 
+% Compute the precision of the relative coding position
+ media=[];
+ for i=1:numel(relative)
+    media(i,:)=relative(i).mu(:);
+ end
+ 
+ gradmu=[];
+ for i=1:numel(gNames)
+     gradmu(:,i)=diff(media(:,i));
+ end
+ 
+ for i=2:numel(relative)
+    invsigma_rel(i)=gradmu(i-1,:)*inv(relative(i).Cov)*gradmu(i-1,:)'; 
+ end
+
+ 
+ plot([1:200]/200,1./sqrt(invsigma_rel)/1000,'r')
+ hold on
+ plot([1:numel(absolute)]/200,1./sqrt(invsigma_abs)/1000,'k')
+ xlabel('x/L')
+ ylabel('sigma/L')
+ set(gca,'FontSize',16,'Box','Off','TickDir','Out');
+ axis([-0.1 1.1 0 .1])
+ axis square
+ legend('Relati')
+
+
+
 % for n=1:max(max(yy));
 %     valy(n)=length(find(yy==n));
 % end

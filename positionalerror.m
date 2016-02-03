@@ -1,4 +1,7 @@
-%% Compute the covariance, average depending on x
+% Decoding the position and computing the level of precision with which 
+% expression levels encode it.
+% PNAS Positional information, in bits. Eq 11
+% Get the value for the relative position
 
 load('wt_130104_Kni_Kr_Gt_Hb_AP.mat')
 
@@ -116,7 +119,7 @@ yy= ones(Nem,1)*ceil([1:1000]/nbin);
 
 temporary=struct('Hb',[],'Kr',[],'Gt',[],'Kni',[]);
 relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
- for n=min(min(xx)):max(max(xx));
+ for n=min(min(yy)):max(max(yy));
     [ii,jj] = find(yy==n);  
     for loopIndex = 1:numel(gNames) 
         tmp=g.(gNames{loopIndex});  
@@ -130,6 +133,53 @@ relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
     relative(n).Cov=nancov(C');
     relative(n).mu=nanmean(C'); 
  end
+ 
+ 
+  
+% Compute the precision of the absolute coding position
+ media=[];
+ for i=1:numel(absolute)
+    media(i,:)=absolute(i).mu(:);
+ end
+ 
+ gradmu=[];
+ for i=1:numel(gNames)
+     gradmu(:,i)=diff(media(:,i));
+ end
+ 
+ for i=2:numel(absolute)
+    invsigma_abs(i)=gradmu(i-1,:)*inv(absolute(i).Cov)*gradmu(i-1,:)'; 
+ end
+
+ 
+ 
+% Compute the precision of the relative coding position
+ media=[];
+ for i=1:numel(relative)
+    media(i,:)=relative(i).mu(:);
+ end
+ 
+ gradmu=[];
+ for i=1:numel(gNames)
+     gradmu(:,i)=diff(media(:,i));
+ end
+ 
+ for i=2:numel(relative)
+    invsigma_rel(i)=gradmu(i-1,:)*inv(relative(i).Cov)*gradmu(i-1,:)'; 
+ end
+
+ figure(1)
+ plot([1:200]/200,1./sqrt(invsigma_rel)/1000,'r')
+ hold on
+ plot([1:numel(absolute)]/200,1./sqrt(invsigma_abs)/1000,'k')
+ xlabel('x/L')
+ ylabel('sigma/L')
+ set(gca,'FontSize',16,'Box','Off','TickDir','Out');
+ axis([0. 1.2 0 .011])
+ axis square
+ legend('Relative','Absolute')
+
+
 
 % for n=1:max(max(yy));
 %     valy(n)=length(find(yy==n));
