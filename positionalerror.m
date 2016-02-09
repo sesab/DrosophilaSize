@@ -2,7 +2,8 @@
 % expression levels encode it.
 % PNAS Positional information, in bits. Eq 11
 % Get the value for the relative position
-
+clear all
+close all
 load('wt_130104_Kni_Kr_Gt_Hb_AP.mat')
 
 FigFolder='figs';
@@ -141,14 +142,14 @@ relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
  for i=1:numel(absolute)
     media(i,:)=absolute(i).mu(:);
  end
- 
+ media(i+1,:)=media(i,:);
  gradmu=[];
  for i=1:numel(gNames)
      gradmu(:,i)=diff(media(:,i));
  end
  
- for i=2:numel(absolute)
-    invsigma_abs(i)=gradmu(i-1,:)*inv(absolute(i).Cov)*gradmu(i-1,:)'; 
+ for i=1:numel(absolute)
+    invsigma_abs(i)=gradmu(i,:)*inv(absolute(i).Cov)*gradmu(i,:)'; 
  end
 
  
@@ -158,107 +159,45 @@ relative=repmat(struct('Cov',[],'mu',[]),1,1000/nbin);
  for i=1:numel(relative)
     media(i,:)=relative(i).mu(:);
  end
- 
+ media(i+1,:)=media(i,:);
  gradmu=[];
  for i=1:numel(gNames)
      gradmu(:,i)=diff(media(:,i));
  end
- 
- for i=2:numel(relative)
-    invsigma_rel(i)=gradmu(i-1,:)*inv(relative(i).Cov)*gradmu(i-1,:)'; 
+ invsigma_rel=[];
+ for i=1:numel(relative)
+    invsigma_rel(i)=gradmu(i,:)*inv(relative(i).Cov)*gradmu(i,:)'; 
  end
 
+ 
+ %Compute positional error for each gene
+for n=1:4
+    for i=1:numel(relative)
+        invSinglesigma_rel(i,n)=gradmu(i,n)/relative(i).Cov(n,n)*gradmu(i,n);
+    end
+    
+    for i=1:numel(relative)
+        invSinglesigma_abs(i,n)=gradmu(i,n)/absolute(i).Cov(n,n)*gradmu(i,n);
+    end
+end
+ colors=colormap(summer(4));
+ len=1000/nbin;
  figure(1)
- plot([1:200]/200,1./sqrt(invsigma_rel)/1000,'r')
+ plot([1:len]/len,1./sqrt(invsigma_rel)/1000,'r')
  hold on
- plot([1:numel(absolute)]/200,1./sqrt(invsigma_abs)/1000,'k')
+ plot([1:numel(absolute)]/len,1./sqrt(invsigma_abs)/1000,'b')
+ plot([1:numel(absolute)]/len,0.01*ones(numel(absolute)),'k')
+ plot([1:len]/len,1./sqrt(invSinglesigma_rel(:,1))/1000,'color',colors(1,:),'linestyle','--')
+ plot([1:len]/len,1./sqrt(invSinglesigma_abs(:,1))/1000,'color',colors(3,:),'linestyle','--')
+ %plot([1:len-1]/len,1./sqrt(invSinglesigma_rel(:,2))/1000,'color',colors(2,:),'linestyle','--')
+ % plot([1:len-1]/len,1./sqrt(invSinglesigma_rel(:,3))/1000,'color',colors(3,:),'linestyle','--')
+ %  plot([1:len-1]/len,1./sqrt(invSinglesigma_rel(:,4))/1000,'color',colors(4,:),'linestyle','--')
  xlabel('x/L')
  ylabel('sigma/L')
  set(gca,'FontSize',16,'Box','Off','TickDir','Out');
- axis([0. 1.2 0 .011])
- axis square
- legend('Relative','Absolute')
+ axis([0. 1.2 0 .1])
 
-
-
-% for n=1:max(max(yy));
-%     valy(n)=length(find(yy==n));
-% end
-% 
-% 
-% figure(1)
-% 
-% plot(nanmeang1_abs,nanvarg1_abs,'-',nanmeang1_rel,nanvarg1_rel,'-')
-% 
-% %figure(3)
-% %v=nbin*[1:n];
-% %plot(v,nanvarg1_rel./nanmeang1_rel(1:n))
-% %hold on
-% %plot(v,nanvarg1_abs(1:n)./nanmeang1_abs(1:n),'r')
-% %hold off
-% %figure(4)
-% %v=mean(XX(:,[1:5:1000]));
-% %plot(v,nanmeang1_rel,'b-',[v v],[nanmeang1_rel-nanstdg1_rel nanmeang1_rel+nanstdg1_rel],'b-')
-% 
-% %   this is very encouraging, let's look with error bars
-% 
-% for kk=1:20;
-%     list = randperm(Nem);
-%     list = list(1:round(Nem/2));
-%     test = g1(list,:);
-%     xtest = xx(list,:);
-%     ytest = yy(list,:);
-%     for n=1:max(max(xx));
-%         [ii,jj] = find(xtest==n);
-%         samples = [];
-%         for k=1:length(ii);
-%             samples = [samples test(ii(k),jj(k))];
-%         end
-%         Mg1_abs(kk,n) = nanmean(samples);
-%         Vg1_abs(kk,n) = nanvar(samples);
-%     end
-%     for n=1:max(max(yy));
-%         [ii,jj] = find(ytest==n);
-%         samples = [];
-%         for k=1:length(ii);
-%             samples = [samples test(ii(k),jj(k))];
-%         end
-%         Mg1_rel(kk,n) = nanmean(samples);
-%         Vg1_rel(kk,n) = nanvar(samples);
-%     end
-% end
-% 
-% figure(2)
-% for n=1:length(Mg1_abs);
-%     am = nanmean(Mg1_abs(:,n));
-%     bm = nanstd(Mg1_abs(:,n));
-%     av = nanmean(Vg1_abs(:,n));
-%     bv = nanstd(Vg1_abs(:,n));
-%     plot([am-bm am+bm],[av av],'b-',[am am],[av-bv av+bv],'b-')
-%     hold on
-% end
-% for n=1:length(Mg1_rel);
-%     cm = nanmean(Mg1_rel(:,n));
-%     dm = nanstd(Mg1_rel(:,n));
-%     cv = nanmean(Vg1_rel(:,n));
-%     dv = nanstd(Vg1_rel(:,n));
-%     plot([cm-dm cm+dm],[cv cv],'r-',[cm cm],[cv-dv cv+dv],'r-')
-%     hold on
-% end
-% hold off
-% label=sprintf('mean of %s expression level',genename);
-% xlabel(label)
-% label=sprintf('variance of %s expression level',genename);
-% ylabel(label)
-% set(gca,'FontSize',16,'Box','Off','TickDir','Out');
-% limit=nanmax(cd+dv);
-% axis([-0.1 1.1 0 .1])
-% axis square
-% 
-% filename=fullfile('figs',sprintf('Fig%s.pdf',genename));
-% print('-dpdf','-r200',filename); 
-% 
-% 
+ legend('Relative','Absolute','Hb rel','Hb abs')
 
 
 
